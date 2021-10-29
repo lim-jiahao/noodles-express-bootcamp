@@ -4,6 +4,29 @@ import read from './jsonFileStorage.js';
 const app = express();
 const FILENAME = 'data.json';
 
+const getInnerContent = (key, recipe) => {
+  let innerContent = '';
+  switch (key) {
+    case 'url':
+      innerContent = `<a href=${recipe[key]}>${recipe[key]}</a>`;
+      break;
+    case 'ingredients': {
+      const ingredientList = recipe[key].split('\n');
+      innerContent = '<ul>';
+      ingredientList.forEach((el) => { innerContent += `<li>${el}</li>`; });
+      innerContent += '</ul>';
+      break;
+    }
+    case 'image':
+      innerContent = `<img src=${recipe[key]}>`;
+      break;
+    default:
+      innerContent = recipe[key];
+  }
+
+  return innerContent;
+};
+
 const getRecipeByIndex = (req, res) => {
   read(FILENAME, (err, data) => {
     if (err) {
@@ -19,7 +42,7 @@ const getRecipeByIndex = (req, res) => {
     }
 
     let content = '';
-    Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${recipe[key]}</p>`; });
+    Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`; });
     const html = `
       <html>
         <body>
@@ -49,7 +72,7 @@ const getRecipesByYield = (req, res) => {
     let content = '';
     if (recipes.length > 0) {
       recipes.forEach((recipe) => {
-        Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${recipe[key]}</p>`; });
+        Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`; });
         content += '<hr>';
       });
     } else content = `<p>No recipes of yield ${yieldNum}</p>`;
@@ -83,7 +106,9 @@ const getRecipesByLabel = (req, res) => {
 
     let content = '';
     recipes.forEach((recipe) => {
-      Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${recipe[key]}</p>`; });
+      Object.keys(recipe).forEach((key) => {
+        content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`;
+      });
       content += '<hr>';
     });
 
