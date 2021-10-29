@@ -65,7 +65,41 @@ const getRecipesByYield = (req, res) => {
   });
 };
 
+const getRecipesByLabel = (req, res) => {
+  read(FILENAME, (err, data) => {
+    if (err) {
+      console.error('Read error', err);
+      res.status(500).send(err);
+      return;
+    }
+
+    const label = req.params.label.toLowerCase();
+    const recipes = data.recipes.filter((el) => el.label?.toLowerCase().replaceAll(' ', '-') === label);
+
+    if (recipes.length === 0) {
+      res.status(404).send(`Sorry, no recipes with label ${label}!`);
+      return;
+    }
+
+    let content = '';
+    recipes.forEach((recipe) => {
+      Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${recipe[key]}</p>`; });
+      content += '<hr>';
+    });
+
+    const html = `
+      <html>
+        <body>
+          ${content}
+        </body>
+      </html>
+      `;
+    res.status(200).send(html);
+  });
+};
+
 app.get('/recipe/:index', getRecipeByIndex);
 app.get('/yield/:num', getRecipesByYield);
+app.get('/recipe-label/:label', getRecipesByLabel);
 
 app.listen(3004);
