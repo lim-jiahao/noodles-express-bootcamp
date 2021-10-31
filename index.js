@@ -2,29 +2,20 @@ import express from 'express';
 import read from './jsonFileStorage.js';
 
 const app = express();
+app.set('view engine', 'ejs');
+
 const FILENAME = 'data.json';
 
-const getInnerContent = (key, recipe) => {
-  let innerContent = '';
-  switch (key) {
-    case 'url':
-      innerContent = `<a href=${recipe[key]}>${recipe[key]}</a>`;
-      break;
-    case 'ingredients': {
-      const ingredientList = recipe[key].split('\n');
-      innerContent = '<ul>';
-      ingredientList.forEach((el) => { innerContent += `<li>${el}</li>`; });
-      innerContent += '</ul>';
-      break;
+const getAllRecipes = (req, res) => {
+  read(FILENAME, (err, data) => {
+    if (err) {
+      console.error('Read error', err);
+      res.status(500).send(err);
+      return;
     }
-    case 'image':
-      innerContent = `<img src=${recipe[key]}>`;
-      break;
-    default:
-      innerContent = recipe[key];
-  }
 
-  return innerContent;
+    res.status(200).render('index', data);
+  });
 };
 
 const getRecipeByIndex = (req, res) => {
@@ -41,90 +32,82 @@ const getRecipeByIndex = (req, res) => {
       return;
     }
 
-    let content = '';
-    Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`; });
-    const html = `
-      <html>
-        <body>
-          ${content}
-        </body>
-      </html>
-      `;
-    res.status(200).send(html);
+    res.status(200).render('recipe', recipe);
   });
 };
 
-const getRecipesByYield = (req, res) => {
-  read(FILENAME, (err, data) => {
-    if (err) {
-      console.error('Read error', err);
-      res.status(500).send(err);
-      return;
-    }
+// const getRecipesByYield = (req, res) => {
+//   read(FILENAME, (err, data) => {
+//     if (err) {
+//       console.error('Read error', err);
+//       res.status(500).send(err);
+//       return;
+//     }
 
-    const yieldNum = Number(req.params.num);
-    if (Number.isNaN(yieldNum) || yieldNum <= 0) {
-      res.status(404).send('Sorry, we cannot find that');
-      return;
-    }
+//     const yieldNum = Number(req.params.num);
+//     if (Number.isNaN(yieldNum) || yieldNum <= 0) {
+//       res.status(404).send('Sorry, we cannot find that');
+//       return;
+//     }
 
-    const recipes = data.recipes.filter((el) => Number(el.yield) === yieldNum);
-    let content = '';
-    if (recipes.length > 0) {
-      recipes.forEach((recipe) => {
-        Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`; });
-        content += '<hr>';
-      });
-    } else content = `<p>No recipes of yield ${yieldNum}</p>`;
+//     const recipes = data.recipes.filter((el) => Number(el.yield) === yieldNum);
+//     let content = '';
+//     if (recipes.length > 0) {
+//       recipes.forEach((recipe) => {
+//         Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`; });
+//         content += '<hr>';
+//       });
+//     } else content = `<p>No recipes of yield ${yieldNum}</p>`;
 
-    const html = `
-      <html>
-        <body>
-          ${content}
-        </body>
-      </html>
-      `;
-    res.status(200).send(html);
-  });
-};
+//     const html = `
+//       <html>
+//         <body>
+//           ${content}
+//         </body>
+//       </html>
+//       `;
+//     res.status(200).send(html);
+//   });
+// };
 
-const getRecipesByLabel = (req, res) => {
-  read(FILENAME, (err, data) => {
-    if (err) {
-      console.error('Read error', err);
-      res.status(500).send(err);
-      return;
-    }
+// const getRecipesByLabel = (req, res) => {
+//   read(FILENAME, (err, data) => {
+//     if (err) {
+//       console.error('Read error', err);
+//       res.status(500).send(err);
+//       return;
+//     }
 
-    const label = req.params.label.toLowerCase();
-    const recipes = data.recipes.filter((el) => el.label?.toLowerCase().replaceAll(' ', '-') === label);
+//     const label = req.params.label.toLowerCase();
+//     const recipes = data.recipes.filter((el) => el.label?.toLowerCase().replaceAll(' ', '-') === label);
 
-    if (recipes.length === 0) {
-      res.status(404).send(`Sorry, no recipes with label ${label}!`);
-      return;
-    }
+//     if (recipes.length === 0) {
+//       res.status(404).send(`Sorry, no recipes with label ${label}!`);
+//       return;
+//     }
 
-    let content = '';
-    recipes.forEach((recipe) => {
-      Object.keys(recipe).forEach((key) => {
-        content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`;
-      });
-      content += '<hr>';
-    });
+//     let content = '';
+//     recipes.forEach((recipe) => {
+//       Object.keys(recipe).forEach((key) => {
+//         content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`;
+//       });
+//       content += '<hr>';
+//     });
 
-    const html = `
-      <html>
-        <body>
-          ${content}
-        </body>
-      </html>
-      `;
-    res.status(200).send(html);
-  });
-};
+//     const html = `
+//       <html>
+//         <body>
+//           ${content}
+//         </body>
+//       </html>
+//       `;
+//     res.status(200).send(html);
+//   });
+// };
 
+app.get('/', getAllRecipes);
 app.get('/recipe/:index', getRecipeByIndex);
-app.get('/yield/:num', getRecipesByYield);
-app.get('/recipe-label/:label', getRecipesByLabel);
+// app.get('/yield/:num', getRecipesByYield);
+// app.get('/recipe-label/:label', getRecipesByLabel);
 
 app.listen(3004);
