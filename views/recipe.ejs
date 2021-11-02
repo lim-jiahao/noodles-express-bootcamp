@@ -36,7 +36,9 @@
               <p class="card-text">Source: <%= source %></p>
               <p class="card-text">URL: <a href="<%= url %>">Link</a></p>
               <p class="card-text">Yield: <%= yield %> servings</p>
-              <p class="card-text">Caution: <%= caution %></p>
+              <p class="card-text">
+                Caution: <%= locals.caution ?? 'No caution' %>
+              </p>
               <p class="card-text">
                 Category: <%= locals.category ?? 'Uncategorised' %>
               </p>
