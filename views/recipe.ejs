@@ -16,7 +16,6 @@
       crossorigin="anonymous"
     />
 
-    <link rel="stylesheet" href="styles.css" />
     <title><%= label %></title>
   </head>
   <body>
@@ -58,7 +57,10 @@
           </div>
         </div>
         <div class="col">
-          <footer><a href="/">Main Page</a></footer>
+          <footer>
+            <a href="/">Main Page</a>
+            <a href="/favourites?index=<%= index %> ">Add to Favourites</a>
+          </footer>
         </div>
       </div>
     </div>

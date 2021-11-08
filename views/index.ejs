@@ -16,7 +16,6 @@
       crossorigin="anonymous"
     />
 
-    <link rel="stylesheet" href="styles.css" />
     <title>Noodles!</title>
   </head>
   <body>
@@ -32,10 +31,16 @@
           <div class="card">
             <div class="card-body">
               <h2 class="card-title">Recipes</h2>
+              <a href="favourites/remove" style="color: red"
+                >Remove all Favourites</a
+              >
               <ul class="card-text list-unstyled">
                 <% recipes.forEach((recipe, index) => { %>
                 <li>
                   <a href="recipe/<%= index %>"><%= recipe.label %></a>
+                  <% if (favIndexes.includes(index)) { %>
+                  <span>⭐</span>
+                  <% } %>
                 </li>
                 <% }); %>
               </ul>

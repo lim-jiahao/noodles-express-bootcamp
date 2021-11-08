@@ -1,7 +1,9 @@
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import read from './jsonFileStorage.js';
 
 const app = express();
+app.use(cookieParser());
 app.set('view engine', 'ejs');
 
 const FILENAME = 'data.json';
@@ -15,9 +17,11 @@ const getAllRecipes = (req, res) => {
     }
 
     const categories = [...new Set(data.recipes.map((recipe) => recipe.category ?? 'Uncategorised'))];
-    console.log(categories);
 
-    res.status(200).render('index', { recipes: data.recipes, categories });
+    let favIndexes = [];
+    if (req.cookies.favourites) favIndexes = req.cookies.favourites;
+
+    res.status(200).render('index', { recipes: data.recipes, categories, favIndexes });
   });
 };
 
@@ -29,7 +33,10 @@ const getRecipeByIndex = (req, res) => {
       return;
     }
 
-    const recipe = data.recipes[req.params.index];
+    const { index } = req.params;
+    const recipe = data.recipes[index];
+    recipe.index = index;
+
     if (!recipe) {
       res.status(404).send('Sorry, we cannot find that!');
       return;
@@ -61,79 +68,28 @@ const getRecipesByCategory = (req, res) => {
   });
 };
 
-// const getRecipesByYield = (req, res) => {
-//   read(FILENAME, (err, data) => {
-//     if (err) {
-//       console.error('Read error', err);
-//       res.status(500).send(err);
-//       return;
-//     }
+const addRecipeToFavourites = (req, res) => {
+  const { index } = req.query;
 
-//     const yieldNum = Number(req.params.num);
-//     if (Number.isNaN(yieldNum) || yieldNum <= 0) {
-//       res.status(404).send('Sorry, we cannot find that');
-//       return;
-//     }
+  let favIndexes = [];
 
-//     const recipes = data.recipes.filter((el) => Number(el.yield) === yieldNum);
-//     let content = '';
-//     if (recipes.length > 0) {
-//       recipes.forEach((recipe) => {
-//         Object.keys(recipe).forEach((key) => { content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`; });
-//         content += '<hr>';
-//       });
-//     } else content = `<p>No recipes of yield ${yieldNum}</p>`;
+  if (req.cookies.favourites) favIndexes = req.cookies.favourites;
 
-//     const html = `
-//       <html>
-//         <body>
-//           ${content}
-//         </body>
-//       </html>
-//       `;
-//     res.status(200).send(html);
-//   });
-// };
+  if (!favIndexes.includes(Number(index))) favIndexes.push(Number(index));
 
-// const getRecipesByLabel = (req, res) => {
-//   read(FILENAME, (err, data) => {
-//     if (err) {
-//       console.error('Read error', err);
-//       res.status(500).send(err);
-//       return;
-//     }
+  res.cookie('favourites', favIndexes);
+  res.redirect('/');
+};
 
-//     const label = req.params.label.toLowerCase();
-//     const recipes = data.recipes.filter((el) => el.label?.toLowerCase().replaceAll(' ', '-') === label);
-
-//     if (recipes.length === 0) {
-//       res.status(404).send(`Sorry, no recipes with label ${label}!`);
-//       return;
-//     }
-
-//     let content = '';
-//     recipes.forEach((recipe) => {
-//       Object.keys(recipe).forEach((key) => {
-//         content += `<p><strong>${key}</strong>: ${getInnerContent(key, recipe)}</p>`;
-//       });
-//       content += '<hr>';
-//     });
-
-//     const html = `
-//       <html>
-//         <body>
-//           ${content}
-//         </body>
-//       </html>
-//       `;
-//     res.status(200).send(html);
-//   });
-// };
+const removeAllFavourites = (req, res) => {
+  res.clearCookie('favourites');
+  res.redirect('/');
+};
 
 app.get('/', getAllRecipes);
 app.get('/recipe/:index', getRecipeByIndex);
 app.get('/category/:category', getRecipesByCategory);
-// app.get('/yield/:num', getRecipesByYield);
-// app.get('/recipe-label/:label', getRecipesByLabel);
+app.get('/favourites', addRecipeToFavourites);
+app.get('/favourites/remove', removeAllFavourites);
 
 app.listen(3004);
